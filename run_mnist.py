@@ -65,10 +65,10 @@ def train(args, model, device, trainset, optimizer, epoch, example_stats):
 
     # Get permutation to shuffle trainset
     trainset_permutation_inds = npr.permutation(
-        np.arange(len(trainset.train_labels)))
+        np.arange(len(trainset.targets)))
 
     for batch_idx, batch_start_ind in enumerate(
-            range(0, len(trainset.train_labels), batch_size)):
+            range(0, len(trainset.targets), batch_size)):
 
         # Get trainset indices for batch
         batch_inds = trainset_permutation_inds[batch_start_ind:
@@ -80,7 +80,7 @@ def train(args, model, device, trainset, optimizer, epoch, example_stats):
             transformed_trainset.append(trainset.__getitem__(ind)[0])
         inputs = torch.stack(transformed_trainset)
         targets = torch.LongTensor(
-            np.array(trainset.train_labels)[batch_inds].tolist())
+            np.array(trainset.targets)[batch_inds].tolist())
 
         # Map to available device
         inputs, targets = inputs.to(device), targets.to(device)
@@ -154,19 +154,19 @@ def test(args, model, device, testset, example_stats):
     model.eval()
 
     for batch_idx, batch_start_ind in enumerate(
-            range(0, len(testset.test_labels), test_batch_size)):
+            range(0, len(testset.targets), test_batch_size)):
 
         # Get batch inputs and targets
         transformed_testset = []
         for ind in range(
                 batch_start_ind,
                 min(
-                    len(testset.test_labels),
+                    len(testset.targets),
                     batch_start_ind + test_batch_size)):
             transformed_testset.append(testset.__getitem__(ind)[0])
         inputs = torch.stack(transformed_testset)
         targets = torch.LongTensor(
-            np.array(testset.test_labels)[batch_start_ind:batch_start_ind +
+            np.array(testset.targets)[batch_start_ind:batch_start_ind +
                                           test_batch_size].tolist())
 
         # Map to available device
@@ -303,7 +303,7 @@ testset = datasets.MNIST(
 
 # Get indices of examples that should be used for training
 if args.sorting_file == 'none':
-    train_indx = np.array(range(len(trainset.train_labels)))
+    train_indx = np.array(range(len(trainset.targets)))
 else:
     try:
         with open(
@@ -321,18 +321,18 @@ else:
 
     # Remove the corresponding elements
     train_indx = np.setdiff1d(
-        range(len(trainset.train_labels)), elements_to_remove)
+        range(len(trainset.targets)), elements_to_remove)
 
 # Remove remove_n number of examples from the train set at random
 if args.keep_lowest_n < 0:
     train_indx = npr.permutation(np.arange(len(
-        trainset.train_labels)))[:len(trainset.train_labels) - args.remove_n]
+        trainset.targets)))[:len(trainset.targets) - args.remove_n]
 
 # Reassign train data and labels
-trainset.train_data = trainset.train_data[train_indx, :, :]
-trainset.train_labels = np.array(trainset.train_labels)[train_indx].tolist()
+trainset.data = trainset.data[train_indx, :, :]
+trainset.targets = np.array(trainset.targets)[train_indx].tolist()
 
-print('Training on ' + str(len(trainset.train_labels)) + ' examples')
+print('Training on ' + str(len(trainset.targets)) + ' examples')
 
 # Setup model and optimizer
 model = Net().to(device)
