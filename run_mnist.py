@@ -137,6 +137,7 @@ def train(args, model, device, trainset, optimizer, epoch, example_stats):
 
         # Add training accuracy to dict
         index_stats = example_stats.get('train', [[], []])
+        index_stats[0].append(loss.item())
         index_stats[1].append(100. * correct.item() / float(total))
         example_stats['train'] = index_stats
 
@@ -184,6 +185,7 @@ def test(args, model, device, testset, example_stats):
     # Add test accuracy to dict
     acc = 100. * correct.item() / total
     index_stats = example_stats.get('test', [[], []])
+    index_stats[0].append(loss.item())
     index_stats[1].append(100. * correct.item() / float(total))
     example_stats['test'] = index_stats
     print("\n| Validation Epoch #%d\t\t\tLoss: %.4f Acc@1: %.2f%%" %
@@ -363,7 +365,15 @@ for epoch in range(args.epochs):
 
     # Log the best train and test accuracy so far
     with open(fname + "__best_acc.txt", "w") as f:
-        f.write('train test \n')
-        f.write(str(max(example_stats['train'][1])))
+        max_train_acc_idx = example_stats['train'][1].index(max(example_stats['train'][1]))
+        max_test_acc_idx = example_stats['test'][1].index(max(example_stats['test'][1]))
+        f.write('metric train test \n')
+        f.write('accuracy')
+        f.write(str(example_stats['train'][1][max_train_acc_idx]))
         f.write(' ')
-        f.write(str(max(example_stats['test'][1])))
+        f.write(str(example_stats['test'][1][max_test_acc_idx]))
+        f.write('loss')
+        f.write(str(example_stats['train'][0][max_train_acc_idx]))
+        f.write(' ')
+        f.write(str(example_stats['test'][0][max_test_acc_idx]))
+
